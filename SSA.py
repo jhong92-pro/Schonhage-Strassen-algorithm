@@ -122,10 +122,11 @@ def chinese_remainder(Y_idft:List, Y_mod_b:List, b:int, l:int):
     Y = [0]*len(Y_idft)
 
     for i in range(len(Y)):        
-        Y[i] = (((Y_mod_b[i] - Y_idft[i])<<(l<<1)) + Y_mod_b[i])%(b*(2**(2*l)+1))
-        # TODO : how to compute Y[i] efficiently?
-        # max(Y_idft[i])=2**(2l)
-        # min(((Y_mod_b[i] - Y_idft[i])<<(l<<1))= - 2**(4l) ~= n**2
+        # Y[i] = (((Y_mod_b[i] - Y_idft[i])<<(l<<1)) + Y_mod_b[i])%(b*(2**(2*l)+1))
+        delta = (Y_mod_b[i] - Y_idft[i])&(b-1)
+        Y[i] = Y_idft[i]+delta+(delta<<(l<<1))
+        # TODO
+        # why it works? : https://math.stackexchange.com/questions/72771/sch%c3%b6nhage-strassen-multiplication
     return Y
 
 def omega_to_list(diff_ceil, b, l):
@@ -164,9 +165,9 @@ def multiplication(n1:int,n2:int):
     Y = chinese_remainder(Y_idft,Y_mod_b, b, l)
     y = array_to_num(Y, l)
     return y
-
-n1 = 1010101010101011524152412645614251624612416241624
-n2 = 10101152152
+11
+n1 = 101010101010101152415241264561425162461241624162411111111111111
+n2 = 10101152152523352523
 # print(n1*n2)
 # print(karatsuba_mul(n1,n2))
 # n1 = 0b1
