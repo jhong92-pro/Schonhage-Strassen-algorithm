@@ -70,8 +70,13 @@ def mod_bit_op(a:int,l:int): # not used
 def mod_bit_recursive(a:int,l:int):
     # keep value greater than or equal to 0
     ret = 0
-    is_positive = True
+    if a==0:
+        return ret
     thres = 2**(2*l)+1
+    if a < 0:
+        a += thres
+    is_positive = True
+    
     while a>0:
         a_back = (a&((1<<(l<<1))-1))
         a = a>>(2*l)
@@ -86,8 +91,7 @@ def mod_bit_recursive(a:int,l:int):
         is_positive = not is_positive
     return ret
 
-def mod_bit_shift(a:int, l:int, size:int):
-    # not used
+def mod_single_bit_shift(a:int, l:int, size:int):
     if size==0:
         return a
     ret = a>>size
@@ -107,10 +111,10 @@ def fft_in_place(U:List,omegas:List,l:int,b:int):
             for j in range(0, M >> 1):
                 k = i + j + (M >> 1)
                 even = U[i + j]
-                odd = U[k]*omegas[g]
+                odd = mod_bit_recursive(U[k]*omegas[g],l)
                 # note) U[k]*omegas[g] should be calculated in SSA
-                U[i + j] = mod_bit_op(even + odd,l)
-                U[k] = mod_bit_op(even-odd,l)
+                U[i + j] = mod_bit_recursive(even + odd,l)
+                U[k] = mod_bit_recursive(even-odd,l)
                 g = g + (len(U) >> m)
                 g = g&(b-1)
         m+=1
@@ -121,7 +125,7 @@ def fft_in_place(U:List,omegas:List,l:int,b:int):
 def pointwise_multiplication(U:List,B:List,l:int):
     C = [0]*len(U)
     for i in range(len(C)):
-        C[i] = mod_bit_op(U[i]*B[i],l)
+        C[i] = mod_bit_recursive(U[i]*B[i],l)
         # note) U[i]*B[i] should be calculated in SSA
     return C
 
@@ -189,7 +193,7 @@ def multiplication(n1:int,n2:int):
     Y_dft = pointwise_multiplication(U_dft,W_dft,l)
 
     Y_idft = fft_in_place(Y_dft, inverse_omegas,l,b)
-    Y_idft = list(map(lambda x:mod_bit_op(x*(1<<(l<<2)-(b.bit_length()-1)),l),Y_idft))
+    Y_idft = list(map(lambda x:mod_bit_recursive(x*(1<<(l<<2)-(b.bit_length()-1)),l),Y_idft))
     Y_mod_b = mod_by_b(U,W,b)
 
     Y = chinese_remainder(Y_idft,Y_mod_b, b, l)
@@ -198,6 +202,10 @@ def multiplication(n1:int,n2:int):
 
 
 ##### TEST
+# print(mod_bit_recursive(18446744072164634858,32))
+# print(mod_bit_op(152789051287975192,123312))
+
+
 n1 = 101010101010101152415241264561425162461241624162411111111111111
 n2 = 10101152152523352523
 # print(n1*n2)
