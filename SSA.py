@@ -55,7 +55,7 @@ def bit_reversal(x:List):
             x[rev] = tmp    
     return x
 
-def mod_bit_op(a:int,l:int):
+def mod_bit_op(a:int,l:int): # not used
     # mod_bit_op(a,l) == a%(2^2l+1)
     # a1(2^(2l)+1)+a2 = a
     a1 = a>>(2*l)
@@ -66,6 +66,34 @@ def mod_bit_op(a:int,l:int):
     if result<0:
         return result+((1<<(l<<1))+1)
     return result
+
+def mod_bit_recursive(a:int,l:int):
+    # keep value greater than or equal to 0
+    ret = 0
+    is_positive = True
+    thres = 2**(2*l)+1
+    while a>0:
+        a_back = (a&((1<<(l<<1))-1))
+        a = a>>(2*l)
+        if is_positive:
+            ret+=a_back
+            if ret>=thres:
+                ret-=thres
+        else:
+            ret-=a_back
+            if ret < 0:
+                ret+=thres
+        is_positive = not is_positive
+    return ret
+
+def mod_bit_shift(a:int, l:int, size:int):
+    # not used
+    if size==0:
+        return a
+    ret = a>>size
+    if ret > 0:
+        return ret
+    return -2**(2*l-size)
 
 def fft_in_place(U:List,omegas:List,l:int,b:int):
     U = U[:]
@@ -137,8 +165,10 @@ def omega_to_list(diff_ceil, b, l):
     for i in range(1,b):
         omegas[i] = omegas[i-1]<<(4<<diff_ceil)
         log2_omega+=(4<<diff_ceil)
-        # note) omegas[i]*inverse_omegas[i]=2**(4l)
-        inverse_omegas[i] = mod_bit_op(1<<((l<<2)-log2_omega),l)
+        # note) omegas[i]*invserse_omegas[i]=2**(4l)
+        
+        inverse_omegas[i] = mod_bit_recursive(1<<((l<<2)-log2_omega),l)
+        # inverse_omegas[i] = mod_bit_shift(inverse_omegas[i-1],l,4<<diff_ceil) # TODO: simple way of calculating mod_bit_shift
     return [omegas, inverse_omegas]
 
 def multiplication(n1:int,n2:int):
@@ -165,7 +195,9 @@ def multiplication(n1:int,n2:int):
     Y = chinese_remainder(Y_idft,Y_mod_b, b, l)
     y = array_to_num(Y, l)
     return y
-11
+
+
+##### TEST
 n1 = 101010101010101152415241264561425162461241624162411111111111111
 n2 = 10101152152523352523
 # print(n1*n2)
